@@ -32,6 +32,4 @@ fig = px.line(one, x="날짜", y="일관객", markers=True)
 fig.update_traces(hovertemplate="날짜 %{x|%Y-%m-%d}<br>관객 %{y:,}명<extra></extra>")
 st.plotly_chart(fig, width="stretch")
 
-st.caption("이 그래프로 알 수 있는 것: (한 문장으로 적어 보세요)")
-
 # ── 앞으로 그래프 2, 3, 4, 5가 이 아래에 추가됩니다 ──────────
