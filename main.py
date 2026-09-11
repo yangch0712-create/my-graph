@@ -127,8 +127,71 @@ st.info("💡 **이 그래프로 알 수 있는 것:** 개봉 시기가 서로 �
 st.markdown("---")
 
 # ==========================================
-# [섹션 3] (추가 예정 구역)
+# [섹션 3] 날짜별 박스오피스 10위권 총관객수 추이 (신규 추가: 영역 그래프)
 # ==========================================
-st.subheader("3. 누적관객수 성장 곡선 (추가 예정)")
-st.caption("📌 이 구역에는 시간 흐름에 따른 누적관객수 달성 속도 비교 그래프가 추가될 예정입니다.")
-# TODO: 다음 그래프 구현 위치
+st.subheader("3. 날짜별 박스오피스 10위권 총관객수 추이")
+
+# 날짜별 10위권 일관객 합계 계산
+daily_total_df = df.groupby('날짜')['일관객'].sum().reset_index()
+daily_total_df = daily_total_df.sort_values('날짜')
+
+# 영역 그래프(Area Chart) 생성
+fig3 = px.area(
+    daily_total_df,
+    x='날짜',
+    y='일관객',
+    title="일별 박스오피스 Top 10 관객 총합계 (전체 극장가 활성도)",
+    labels={'날짜': '날짜', '일관객': '10위권 일관객 총합계(명)'},
+    hover_data={'날짜': '|%Y-%m-%d', '일관객': ':,d'}
+)
+
+# 관객 합계가 가장 컸던 상위 3일 추출
+top3_days = daily_total_df.nlargest(3, '일관객')
+
+# 그래프 채우기 스타일 설정
+fig3.update_traces(line=dict(width=1.5, color='#1f77b4'), fillcolor='rgba(31, 119, 180, 0.3)')
+
+# 관객수 Top 3 피크 날짜 주석(Annotation) 표시
+for idx, row in top3_days.iterrows():
+    date_str = row['날짜'].strftime('%Y-%m-%d')
+    audience_count = f"{row['일관객']:,}명"
+    rank = top3_days.index.get_loc(idx) + 1
+    
+    fig3.add_annotation(
+        x=row['날짜'],
+        y=row['일관객'],
+        text=f"🏆 Top {rank}<br>{date_str}<br>({audience_count})",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=1.5,
+        arrowcolor="#d62728",
+        ax=0,
+        ay=-45,
+        bordercolor="#d62728",
+        borderwidth=1,
+        borderpad=4,
+        bgcolor="#ffffff",
+        opacity=0.9,
+        font=dict(size=11, color="#d62728")
+    )
+
+fig3.update_layout(
+    xaxis_title="날짜",
+    yaxis_title="10위권 일관객 총합계(명)",
+    hovermode="x unified",
+    margin=dict(l=20, r=20, t=50, b=20)
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 그래프 해설 문구 자리
+st.info("💡 **이 그래프로 알 수 있는 것:** 연중 극장 박스오피스 전체 시장의 최대 활성 피크 시즌(명절, 연휴, 여름 성수기 등)과 날짜별 전체 극장가 관객 규모 변동 폭을 파악할 수 있습니다.")
+
+st.markdown("---")
+
+# ==========================================
+# [섹션 4] (추가 예정 구역)
+# ==========================================
+st.subheader("4. (추가 예정 구역)")
+st.caption("📌 이 구역에는 추가 분석 그래프가 배치될 예정입니다.")
