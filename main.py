@@ -1,93 +1,37 @@
+# 영화 데이터 그래프 도감 1 - 시간
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. 페이지 기본 설정
-st.set_page_config(
-    page_title="영화 데이터 그래프 도감 1 - 시간",
-    page_icon="🎬",
-    layout="wide"
-)
+st.set_page_config(page_title="영화 데이터 그래프 도감 1 - 시간", layout="wide")
+st.title("영화 데이터 그래프 도감 1 - 시간")
 
-# 2. 메인 타이틀
-st.title("🎬 영화 데이터 그래프 도감 1 - 시간")
-st.markdown("1년치(365일) 일별 박스오피스 데이터를 바탕으로 시간 흐름에 따른 시각화 그래프를 제공합니다.")
-st.markdown("---")
+DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_daily.csv"
 
-# 3. 데이터 로드 및 전처리
+
 @st.cache_data
 def load_data():
-    url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_daily.csv"
-    df = pd.read_csv(url)
-    
-    # '날짜' 열을 문자열 변환 후 datetime 객체로 변환 (YYYYMMDD -> YYYY-MM-DD)
-    df['날짜'] = pd.to_datetime(df['날짜'].astype(str), format='%Y%m%d')
-    
+    # 1년치(365일) 일별 박스오피스 10위권 기록을 불러옵니다.
+    df = pd.read_csv(DATA_URL)
+    # 여덟 자리 숫자로 된 날짜 열을 진짜 날짜로 바꿉니다.
+    df["날짜"] = pd.to_datetime(df["날짜"], format="%Y%m%d")
     return df
 
-try:
-    df = load_data()
-except Exception as e:
-    st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
-    st.stop()
 
-# ==========================================
-# [섹션 1] 영화별 일관객수 변화 (선 그래프)
-# ==========================================
-st.subheader("1. 영화별 일관객수 추이")
+df = load_data()
 
-# 영화 목록 추출 (가나다순 정렬)
-movie_list = sorted(df['영화명'].unique())
+# ── 그래프 1. 영화 하나의 흥행 곡선 ──────────────────────────
+st.header("1. 한 영화의 흥행 곡선")
 
-# 영화 선택 드롭다운
-selected_movie = st.selectbox(
-    "📊 관객수 추이를 확인할 영화를 선택하세요:",
-    movie_list,
-    index=0
-)
+# 드롭다운으로 영화를 고릅니다.
+movie_list = sorted(df["영화명"].unique())
+movie = st.selectbox("영화를 고르세요", movie_list)
 
-# 선택한 영화 데이터 필터링 및 날짜순 정렬
-filtered_df = df[df['영화명'] == selected_movie].sort_values('날짜')
+one = df[df["영화명"] == movie].sort_values("날짜")
+fig = px.line(one, x="날짜", y="일관객", markers=True)
+fig.update_traces(hovertemplate="날짜 %{x|%Y-%m-%d}<br>관객 %{y:,}명<extra></extra>")
+st.plotly_chart(fig, width="stretch")
 
-# Plotly 선 그래프 생성
-fig1 = px.line(
-    filtered_df,
-    x='날짜',
-    y='일관객',
-    title=f"<{selected_movie}> 날짜별 일관객수 변화",
-    labels={'날짜': '날짜', '일관객': '일일 관객수(명)'},
-    hover_data={'날짜': '|%Y-%m-%d', '일관객': ':,d'}
-)
+st.caption("이 그래프로 알 수 있는 것: (한 문장으로 적어 보세요)")
 
-# 그래프 디자인 요소 설정
-fig1.update_traces(mode='lines+markers', line=dict(width=2.5))
-fig1.update_layout(
-    xaxis_title="날짜",
-    yaxis_title="일일 관객수(명)",
-    hovermode="x unified",
-    margin=dict(l=20, r=20, t=50, b=20)
-)
-
-# Plotly 그래프 출력
-st.plotly_chart(fig1, use_container_width=True)
-
-# 그래프 해설 문구 자리
-st.info(f"💡 **이 그래프로 알 수 있는 것:** 개봉 후 시간 경과에 따른 관객수 증감 추이와 주말/평일 관객 격차 폭을 한눈에 확인할 수 있습니다.")
-
-st.markdown("---")
-
-# ==========================================
-# [섹션 2] (추가 예정 구역)
-# ==========================================
-st.subheader("2. 관객수 & 스크린수 복합 추이 (추가 예정)")
-st.caption("📌 이 구역에는 추후 스크린수 및 상영횟수의 시간 흐름에 따른 변화 그래프가 추가될 예정입니다.")
-# TODO: 다음 그래프 구현 위치
-
-st.markdown("---")
-
-# ==========================================
-# [섹션 3] (추가 예정 구역)
-# ==========================================
-st.subheader("3. 누적관객수 성장 곡선 (추가 예정)")
-st.caption("📌 이 구역에는 시간 흐름에 따른 누적관객수 달성 속도 비교 그래프가 추가될 예정입니다.")
-# TODO: 다음 그래프 구현 위치
+# ── 앞으로 그래프 2, 3, 4, 5가 이 아래에 추가됩니다 ──────────
