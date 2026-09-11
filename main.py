@@ -77,9 +77,9 @@ st.info("💡 **이 그래프로 알 수 있는 것:** 특정 영화의 개봉 �
 st.markdown("---")
 
 # ==========================================
-# [섹션 2] 상위 Top 5 영화의 일관객수 비교 (신규 추가)
+# [섹션 2] 상위 Top 5 영화의 개봉일차별 일관객수 비교 (가로축: 개봉일차)
 # ==========================================
-st.subheader("2. 일관객 합계 Top 5 영화의 날짜별 일관객수 비교")
+st.subheader("2. 일관객 합계 Top 5 영화의 개봉일차별 일관객수 비교")
 
 # 전체 기간 동안 일관객 합계 상위 5개 영화 추출
 top5_movies = (
@@ -90,22 +90,29 @@ top5_movies = (
 )
 
 # Top 5 영화 데이터 필터링
-top5_df = df[df['영화명'].isin(top5_movies)].sort_values('날짜')
+top5_df = df[df['영화명'].isin(top5_movies)].copy()
 
-# Plotly 복수 선 그래프 생성 (color='영화명' 사용)
+# 각 영화별 최초 등재 날짜(개봉일) 기준 '개봉일차' 로직 계산
+top5_df['최초날짜'] = top5_df.groupby('영화명')['날짜'].transform('min')
+top5_df['개봉일차'] = (top5_df['날짜'] - top5_df['최초날짜']).dt.days + 1
+
+# 개봉일차 기준으로 정렬
+top5_df = top5_df.sort_values(['영화명', '개봉일차'])
+
+# Plotly 복수 선 그래프 생성 (x축: 개봉일차)
 fig2 = px.line(
     top5_df,
-    x='날짜',
+    x='개봉일차',
     y='일관객',
     color='영화명',
-    title="기간 내 일관객 합계 Top 5 영화 날짜별 일관객수 비교",
-    labels={'날짜': '날짜', '일관객': '일일 관객수(명)', '영화명': '영화 제목'},
-    hover_data={'날짜': '|%Y-%m-%d', '일관객': ':,d'}
+    title="기간 내 일관객 합계 Top 5 영화의 개봉일차별 일관객수 비교",
+    labels={'개봉일차': '개봉일차 (일)', '일관객': '일일 관객수(명)', '영화명': '영화 제목'},
+    hover_data={'날짜': '|%Y-%m-%d', '개봉일차': '%d일차', '일관객': ':,d'}
 )
 
-fig2.update_traces(mode='lines')
+fig2.update_traces(mode='lines+markers')
 fig2.update_layout(
-    xaxis_title="날짜",
+    xaxis_title="개봉일차 (1일차 = 차트에 진입한 첫날)",
     yaxis_title="일일 관객수(명)",
     hovermode="x unified",
     legend_title_text="영화 선택 (범례 클릭 시 토글)",
@@ -115,7 +122,7 @@ fig2.update_layout(
 st.plotly_chart(fig2, use_container_width=True)
 
 # 그래프 해설 문구 자리
-st.info("💡 **이 그래프로 알 수 있는 것:** 해당 기간 최고 흥행작 Top 5간의 개봉 시기 오버랩, 흥행 화력 비교 및 흥행 대결 양상을 비교해 분석할 수 있습니다.")
+st.info("💡 **이 그래프로 알 수 있는 것:** 개봉 시기가 서로 다른 흥행작들의 개봉 후 동일 시점(일차별) 관객 동원력과 흥행 유효기간, 관객 감소율을 동일 기준선상에서 직관적으로 비교할 수 있습니다.")
 
 st.markdown("---")
 
